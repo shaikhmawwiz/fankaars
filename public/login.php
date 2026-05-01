@@ -1,0 +1,2 @@
+<?php declare(strict_types=1); require_once __DIR__.'/../src/auth/auth.php'; $error=null; if($_SERVER['REQUEST_METHOD']==='POST'){ if(loginUser(trim($_POST['email']??''),$_POST['password']??'')){header('Location: /dashboard.php');exit;} $error='Invalid credentials'; }
+?><!doctype html><html><body><h1>Login</h1><?php if($error):?><p style='color:red'><?=htmlspecialchars($error)?></p><?php endif;?><form method='post'><input name='email' required><input type='password' name='password' required><button>Login</button></form></body></html>
