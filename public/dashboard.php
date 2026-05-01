@@ -24,8 +24,8 @@ try {
                 'email' => trim((string)$_POST['email']),
                 'password' => (string)$_POST['password'],
                 'role' => (string)$_POST['role'],
-                'salary' => (float)$_POST['salary'],
-                'commission_pct' => (float)$_POST['commission_pct'],
+                'base_salary' => (float)$_POST['base_salary'],
+                'commission_percentage' => (float)$_POST['commission_percentage'],
             ], (int)$user['id']);
             $message = 'User created.';
         }
@@ -37,17 +37,17 @@ try {
             createTask(trim((string)$_POST['title']), trim((string)$_POST['description']), (int)$_POST['assignee_id'], (float)$_POST['task_value']);
             $message = 'Task created.';
         }
-        if (($role === ROLE_EMPLOYEE || $role === ROLE_CORE_EMPLOYEE) && $action === 'start_task') {
+        if (($role === ROLE_EMPLOYEE || $role === ROLE_CORE) && $action === 'start_task') {
             setTaskInProgress((int)$_POST['task_id'], (int)$user['id']);
-            $message = 'Task moved to In Progress.';
+            $message = 'Task moved to in_progress.';
         }
-        if (($role === ROLE_EMPLOYEE || $role === ROLE_CORE_EMPLOYEE) && $action === 'submit_task') {
+        if (($role === ROLE_EMPLOYEE || $role === ROLE_CORE) && $action === 'submit_task') {
             submitTaskForQa((int)$_POST['task_id'], (int)$user['id'], trim((string)$_POST['delivery_path']));
-            $message = 'Task submitted to QA.';
+            $message = 'Task submitted to qa.';
         }
         if ($role === ROLE_QA && $action === 'qa_decision') {
             qaDecision((int)$_POST['task_id'], ($_POST['approved'] ?? '') === '1', trim((string)($_POST['qa_notes'] ?? '')));
-            $message = 'QA decision saved.';
+            $message = 'qa decision saved.';
         }
         if ($role === ROLE_ACCOUNTS && $action === 'mark_paid') {
             markCommissionPaid((int)$_POST['task_id'], (int)$user['id']);
@@ -68,21 +68,21 @@ try {
 
 <?php if($role===ROLE_ADMIN): $employees=allEmployees(); $users=adminAllUsers(); ?>
 <div class="card bg-secondary text-light mb-3"><div class="card-body"><h5>Create User</h5>
-<form method="post" class="row g-2"><input type="hidden" name="action" value="create_user"><div class="col-md-3"><input class="form-control" name="name" required placeholder="Name"></div><div class="col-md-3"><input class="form-control" type="email" name="email" required placeholder="Email"></div><div class="col-md-2"><input class="form-control" name="password" required placeholder="Password"></div><div class="col-md-2"><select class="form-select" name="role"><option>Employee</option><option>Core Employee</option><option>QA</option><option>Accounts</option><option>Admin</option></select></div><div class="col-md-1"><input class="form-control" name="salary" type="number" step="0.01" value="0"></div><div class="col-md-1"><input class="form-control" name="commission_pct" type="number" step="0.01" value="0"></div><div class="col-12"><button class="btn btn-primary">Save User</button></div></form></div></div>
+<form method="post" class="row g-2"><input type="hidden" name="action" value="create_user"><div class="col-md-3"><input class="form-control" name="name" required placeholder="Name"></div><div class="col-md-3"><input class="form-control" type="email" name="email" required placeholder="Email"></div><div class="col-md-2"><input class="form-control" name="password" required placeholder="Password"></div><div class="col-md-2"><select class="form-select" name="role"><option>employee</option><option>core</option><option>qa</option><option>accounts</option><option>admin</option></select></div><div class="col-md-1"><input class="form-control" name="base_salary" type="number" step="0.01" value="0"></div><div class="col-md-1"><input class="form-control" name="commission_percentage" type="number" step="0.01" value="0"></div><div class="col-12"><button class="btn btn-primary">Save User</button></div></form></div></div>
 <div class="card bg-secondary text-light mb-3"><div class="card-body"><h5>Users</h5><table class="table table-dark table-striped"><tr><th>ID</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr><?php foreach($users as $u):?><tr><td><?=$u['id']?></td><td><?=htmlspecialchars($u['email'])?></td><td><?=htmlspecialchars($u['role'])?></td><td><span class="badge <?=$u['is_active']?'bg-success':'bg-danger'?>"><?=$u['is_active']?'Active':'Blocked'?></span></td><td><?php if((int)$u['is_active']===1):?><form method="post"><input type="hidden" name="action" value="block_user"><input type="hidden" name="user_id" value="<?=$u['id']?>"><button class="btn btn-sm btn-danger">Block</button></form><?php endif;?></td></tr><?php endforeach;?></table></div></div>
 <div class="card bg-secondary text-light"><div class="card-body"><h5>Create Task</h5><form method="post" class="row g-2"><input type="hidden" name="action" value="create_task"><div class="col-md-3"><input class="form-control" name="title" required placeholder="Title"></div><div class="col-md-3"><input class="form-control" name="description" placeholder="Description"></div><div class="col-md-2"><input class="form-control" name="task_value" type="number" step="0.01" required placeholder="Value"></div><div class="col-md-3"><select class="form-select" name="assignee_id"><?php foreach($employees as $e):?><option value="<?=$e['id']?>"><?=htmlspecialchars($e['name'])?> (<?=$e['role']?>)</option><?php endforeach;?></select></div><div class="col-md-1"><button class="btn btn-primary">Assign</button></div></form></div></div>
 <?php endif; ?>
 
-<?php if($role===ROLE_EMPLOYEE||$role===ROLE_CORE_EMPLOYEE): $tasks=tasksForEmployee((int)$user['id']); ?>
-<div class="card bg-secondary text-light"><div class="card-body"><h5>My Tasks</h5><table class="table table-dark"><tr><th>ID</th><th>Title</th><th>Status</th><th>Action</th></tr><?php foreach($tasks as $t):?><tr><td><?=$t['id']?></td><td><?=htmlspecialchars($t['title'])?></td><td><span class="badge bg-info"><?=htmlspecialchars($t['status'])?></span></td><td><?php if($t['status']==='Pending'||$t['status']==='Needs Revision'):?><form method="post" class="d-inline"><input type="hidden" name="action" value="start_task"><input type="hidden" name="task_id" value="<?=$t['id']?>"><button class="btn btn-sm btn-warning">Start</button></form><?php endif;?><?php if($t['status']==='In Progress'):?><form method="post" class="d-inline"><input type="hidden" name="action" value="submit_task"><input class="form-control d-inline w-auto" name="delivery_path" placeholder="Submission link" required><input type="hidden" name="task_id" value="<?=$t['id']?>"><button class="btn btn-sm btn-success">Submit</button></form><?php endif;?></td></tr><?php endforeach;?></table></div></div>
+<?php if($role===ROLE_EMPLOYEE||$role===ROLE_CORE): $tasks=tasksForEmployee((int)$user['id']); ?>
+<div class="card bg-secondary text-light"><div class="card-body"><h5>My Tasks</h5><table class="table table-dark"><tr><th>ID</th><th>Title</th><th>Status</th><th>Action</th></tr><?php foreach($tasks as $t):?><tr><td><?=$t['id']?></td><td><?=htmlspecialchars($t['title'])?></td><td><span class="badge bg-info"><?=htmlspecialchars($t['status'])?></span></td><td><?php if($t['status']==='pending'||$t['status']==='review'):?><form method="post" class="d-inline"><input type="hidden" name="action" value="start_task"><input type="hidden" name="task_id" value="<?=$t['id']?>"><button class="btn btn-sm btn-warning">Start</button></form><?php endif;?><?php if($t['status']==='in_progress'):?><form method="post" class="d-inline"><input type="hidden" name="action" value="submit_task"><input class="form-control d-inline w-auto" name="delivery_path" placeholder="Submission link" required><input type="hidden" name="task_id" value="<?=$t['id']?>"><button class="btn btn-sm btn-success">Submit</button></form><?php endif;?></td></tr><?php endforeach;?></table></div></div>
 <?php endif; ?>
 
-<?php if($role===ROLE_QA): $q=tasksByStatus('QA Review');?>
-<div class="card bg-secondary text-light"><div class="card-body"><h5>QA Review</h5><?php foreach($q as $t):?><div class="border rounded p-2 mb-2"><strong>#<?=$t['id']?> <?=htmlspecialchars($t['title'])?></strong> <a target="_blank" class="text-warning" href="<?=htmlspecialchars((string)$t['delivery_path'])?>">Open submission</a><form method="post" class="mt-2"><input type="hidden" name="action" value="qa_decision"><input type="hidden" name="task_id" value="<?=$t['id']?>"><input class="form-control mb-2" name="qa_notes" placeholder="Notes"><button class="btn btn-success" name="approved" value="1">Approve</button> <button class="btn btn-danger" name="approved" value="0">Reject</button></form></div><?php endforeach;?></div></div>
+<?php if($role===ROLE_QA): $q=tasksByStatus('completed');?>
+<div class="card bg-secondary text-light"><div class="card-body"><h5>qa Review</h5><?php foreach($q as $t):?><div class="border rounded p-2 mb-2"><strong>#<?=$t['id']?> <?=htmlspecialchars($t['title'])?></strong> <a target="_blank" class="text-warning" href="<?=htmlspecialchars((string)$t['delivery_path'])?>">Open submission</a><form method="post" class="mt-2"><input type="hidden" name="action" value="qa_decision"><input type="hidden" name="task_id" value="<?=$t['id']?>"><input class="form-control mb-2" name="qa_notes" placeholder="Notes"><button class="btn btn-success" name="approved" value="1">Approve</button> <button class="btn btn-danger" name="approved" value="0">Reject</button></form></div><?php endforeach;?></div></div>
 <?php endif; ?>
 
-<?php if($role===ROLE_ACCOUNTS): $d=tasksByStatus('Delivered');?>
-<div class="card bg-secondary text-light"><div class="card-body"><h5>Accounts Payouts</h5><table class="table table-dark"><tr><th>ID</th><th>Task</th><th>Commission</th><th>Status</th><th></th></tr><?php foreach($d as $t):?><tr><td><?=$t['id']?></td><td><?=htmlspecialchars($t['title'])?></td><td><?=number_format(calculateCommissionAmount($t),2)?></td><td><span class="badge <?=$t['payout_status']==='Paid'?'bg-success':'bg-warning'?>"><?=htmlspecialchars($t['payout_status'])?></span></td><td><?php if($t['payout_status']==='Pending'):?><form method="post"><input type="hidden" name="action" value="mark_paid"><input type="hidden" name="task_id" value="<?=$t['id']?>"><button class="btn btn-sm btn-success">Mark Paid</button></form><?php endif;?></td></tr><?php endforeach;?></table></div></div>
+<?php if($role===ROLE_ACCOUNTS): $d=tasksByStatus('deliverable');?>
+<div class="card bg-secondary text-light"><div class="card-body"><h5>accounts Payouts</h5><table class="table table-dark"><tr><th>ID</th><th>Task</th><th>Commission</th><th>Status</th><th></th></tr><?php foreach($d as $t):?><tr><td><?=$t['id']?></td><td><?=htmlspecialchars($t['title'])?></td><td><?=number_format(calculateCommissionAmount($t),2)?></td><td><span class="badge <?=$t['payout_status']==='paid'?'bg-success':'bg-warning'?>"><?=htmlspecialchars($t['payout_status'])?></span></td><td><?php if($t['payout_status']==='pending'):?><form method="post"><input type="hidden" name="action" value="mark_paid"><input type="hidden" name="task_id" value="<?=$t['id']?>"><button class="btn btn-sm btn-success">Mark paid</button></form><?php endif;?></td></tr><?php endforeach;?></table></div></div>
 <?php endif; ?>
 
 </main></div></div></body></html>

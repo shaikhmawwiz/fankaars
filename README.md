@@ -1,26 +1,32 @@
-# Business Management Portal (Complete UI)
+# Business Management Portal
 
-## Setup
-1. Create database:
-   `mysql -u root -p -e "CREATE DATABASE business_portal"`
-2. Import schema:
-   `mysql -u root -p business_portal < sql/schema.sql`
-3. Seed/refresh demo users (safe to run multiple times):
-   `mysql -u root -p business_portal < sql/seed.sql`
-4. Update DB credentials in `config/database.php`.
-5. Start server: `./bin/run.sh`
-6. Visit `http://127.0.0.1:8080/login.php`
+Dark-mode Bootstrap 5 + Vanilla PHP + MySQL(PPDO) monolith with strict RBAC and snapshot-based commission integrity.
 
-## Demo accounts (password: `password123`)
-- admin@example.com
-- employee@example.com
-- core@example.com
-- qa@example.com
-- accounts@example.com
+## Run
+1. `mysql -u root -p -e "CREATE DATABASE business_portal"`
+2. `mysql -u root -p business_portal < sql/schema.sql`
+3. `mysql -u root -p business_portal < sql/seed.sql`
+4. Configure DB in `config/database.php`
+5. `./bin/run.sh`
+6. Open `http://127.0.0.1:8080/login.php`
 
-## If you see “Invalid credentials”
-1. Rerun seed:
-   `mysql -u root -p business_portal < sql/seed.sql`
-2. Login once again using demo password `password123`.
+## Demo users (password: `password123`)
+- admin@example.com (admin)
+- employee@example.com (employee)
+- core@example.com (core)
+- qa@example.com (qa)
+- accounts@example.com (accounts)
 
-The login flow also has a demo self-heal path for `@example.com` demo users: if stale hashes are found and password is `password123`, it refreshes the stored hash automatically.
+## Implemented security
+- Prepared statements for DB writes/reads in action modules.
+- `password_hash/password_verify` auth.
+- Session gate + active-user revalidation on each request.
+- Soft block (`is_active=0`) instead of deleting users.
+
+## Snapshot logic
+On employee/core submission (`in_progress -> completed`):
+- Save `snapshot_percentage` from current user percentage
+- Save `snapshot_payout = task_value * (snapshot_percentage/100)`
+
+QA approval (`completed -> deliverable`) locks task via `is_locked=1`.
+Accounts payout uses frozen `snapshot_payout` and writes to `payouts` ledger.

@@ -1,3 +1,7 @@
 <?php
 declare(strict_types=1);
-const ROLE_ADMIN='Admin'; const ROLE_EMPLOYEE='Employee'; const ROLE_CORE_EMPLOYEE='Core Employee'; const ROLE_QA='QA'; const ROLE_ACCOUNTS='Accounts';
+const ROLE_ADMIN='admin';
+const ROLE_EMPLOYEE='employee';
+const ROLE_CORE='core';
+const ROLE_QA='qa';
+const ROLE_ACCOUNTS='accounts';
