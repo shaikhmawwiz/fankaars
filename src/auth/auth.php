@@ -17,17 +17,7 @@ function loginUser(string $email, string $password): bool
         return false;
     }
 
-    $isValid = password_verify($password, (string)$user['password_hash']);
-
-    // Self-healing for demo environments with stale seed hashes.
-    if (!$isValid && $password === 'password123' && str_ends_with($email, '@example.com')) {
-        $newHash = password_hash('password123', PASSWORD_DEFAULT);
-        $up = db()->prepare('UPDATE users SET password_hash = :hash, is_active = 1 WHERE id = :id');
-        $up->execute(['hash' => $newHash, 'id' => (int)$user['id']]);
-        $isValid = true;
-    }
-
-    if (!$isValid) {
+    if (!password_verify($password, (string)$user['password_hash'])) {
         return false;
     }
 

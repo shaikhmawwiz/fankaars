@@ -1,5 +1,44 @@
 <?php
+
 declare(strict_types=1);
-function ensureSessionStarted(): void { if(session_status()!==PHP_SESSION_ACTIVE){session_start();}}
-function requireAuth(): void { ensureSessionStarted(); if(!isset($_SESSION['user'])){header('Location: /login.php'); exit;}}
-function requireRole(array $roles): void { requireAuth(); if(!in_array($_SESSION['user']['role']??null,$roles,true)){http_response_code(403); exit('Forbidden');}}
+
+require_once __DIR__ . '/../../config/database.php';
+
+function ensureSessionStarted(): void
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+}
+
+function requireAuth(): void
+{
+    ensureSessionStarted();
+
+    if (!isset($_SESSION['user'])) {
+        header('Location: /login.php');
+        exit;
+    }
+
+    $id = (int)($_SESSION['user']['id'] ?? 0);
+    $stmt = db()->prepare('SELECT is_active FROM users WHERE id = :id LIMIT 1');
+    $stmt->execute(['id' => $id]);
+    $row = $stmt->fetch();
+
+    if (!$row || (int)$row['is_active'] !== 1) {
+        $_SESSION = [];
+        session_destroy();
+        header('Location: /login.php');
+        exit;
+    }
+}
+
+function requireRole(array $roles): void
+{
+    requireAuth();
+
+    if (!in_array($_SESSION['user']['role'] ?? null, $roles, true)) {
+        http_response_code(403);
+        exit('Forbidden');
+    }
+}
