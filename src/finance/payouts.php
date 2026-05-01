@@ -1,0 +1,4 @@
+<?php
+declare(strict_types=1); require_once __DIR__.'/../../config/database.php';
+function calculateCommissionAmount(array $task): float { return (float)($task['snapshot_payout'] ?? 0); }
+function markCommissionPaid(int $taskId,int $accountsId): void { $pdo=db();$pdo->beginTransaction(); try{$s=$pdo->prepare('SELECT * FROM tasks WHERE id=:id AND status="deliverable" FOR UPDATE');$s->execute(['id'=>$taskId]);$t=$s->fetch(); if(!$t){throw new RuntimeException('Task not deliverable');} $amt=(float)$t['snapshot_payout']; $u=$pdo->prepare('UPDATE tasks SET payout_status="paid" WHERE id=:id');$u->execute(['id'=>$taskId]); $p=$pdo->prepare('INSERT INTO payouts (task_id,user_id,amount,payout_type,payment_status,released_by,released_at) VALUES (:tid,:uid,:amt,"commission","released",:rb,NOW())'); $p->execute(['tid'=>$taskId,'uid'=>$t['assignee_id'],'amt'=>$amt,'rb'=>$accountsId]); $pdo->commit(); }catch(Throwable $e){$pdo->rollBack(); throw $e;}}
