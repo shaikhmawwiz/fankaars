@@ -37,7 +37,8 @@ function requireRole(array $roles): void
 {
     requireAuth();
 
-    if (!in_array($_SESSION['user']['role'] ?? null, $roles, true)) {
+    $role = strtolower((string)($_SESSION['user']['role'] ?? ''));
+    if (!in_array($role, $roles, true)) {
         http_response_code(403);
         exit('Forbidden');
     }
