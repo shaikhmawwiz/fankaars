@@ -43,7 +43,7 @@ CREATE TABLE tasks (
 
 CREATE TABLE payouts (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  task_id BIGINT UNSIGNED NOT NULL,
+  task_id BIGINT UNSIGNED NULL,
   user_id BIGINT UNSIGNED NOT NULL,
   amount DECIMAL(12,2) NOT NULL,
   payout_type ENUM('salary','commission') NOT NULL,
