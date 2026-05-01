@@ -19,7 +19,8 @@
 - accounts@example.com
 
 ## If you see “Invalid credentials”
-Run this to refresh user passwords and reactivate accounts:
-`mysql -u root -p business_portal < sql/seed.sql`
+1. Rerun seed:
+   `mysql -u root -p business_portal < sql/seed.sql`
+2. Login once again using demo password `password123`.
 
-`sql/seed.sql` now uses `ON DUPLICATE KEY UPDATE`, so existing users are corrected in-place.
+The login flow also has a demo self-heal path for `@example.com` demo users: if stale hashes are found and password is `password123`, it refreshes the stored hash automatically.
