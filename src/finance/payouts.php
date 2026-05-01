@@ -1,0 +1,4 @@
+<?php
+declare(strict_types=1); require_once __DIR__.'/../../config/database.php';
+function calculateCommissionAmount(array $task): float { return round(((float)$task['task_value'])*(((float)$task['snapshot_commission_pct'])/100),2);} 
+function markCommissionPaid(int $taskId,int $accountsId): void {$pdo=db();$pdo->beginTransaction();try{$s=$pdo->prepare('SELECT * FROM tasks WHERE id=:id AND status="Delivered" FOR UPDATE');$s->execute(['id'=>$taskId]);$t=$s->fetch();if(!$t){throw new RuntimeException('Task not found');}$amt=calculateCommissionAmount($t);$u=$pdo->prepare('UPDATE tasks SET payout_status="Paid",payout_paid_at=NOW() WHERE id=:id');$u->execute(['id'=>$taskId]);$l=$pdo->prepare('INSERT INTO ledger_entries (task_id,user_id,amount,entry_type,created_by) VALUES (:t,:u,:a,"commission_payout",:c)');$l->execute(['t'=>$taskId,'u'=>$t['assignee_id'],'a'=>$amt,'c'=>$accountsId]);$pdo->commit();}catch(Throwable $e){$pdo->rollBack();throw $e;}}
