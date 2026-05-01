@@ -18,6 +18,15 @@
 - qa@example.com
 - accounts@example.com
 
+## If login fails
+If you seeded earlier with old hashes, reseed users:
+```sql
+TRUNCATE TABLE users;
+SOURCE sql/seed.sql;
+```
+Or run:
+`mysql -u root -p business_portal < sql/seed.sql`
+
 ## Implemented UI + Workflow
 - Admin dashboard: create and assign tasks.
 - Employee/Core dashboard: start assigned tasks and submit to QA.
