@@ -5,7 +5,7 @@
    `mysql -u root -p -e "CREATE DATABASE business_portal"`
 2. Import schema:
    `mysql -u root -p business_portal < sql/schema.sql`
-3. Seed demo users:
+3. Seed/refresh demo users (safe to run multiple times):
    `mysql -u root -p business_portal < sql/seed.sql`
 4. Update DB credentials in `config/database.php`.
 5. Start server: `./bin/run.sh`
@@ -18,18 +18,8 @@
 - qa@example.com
 - accounts@example.com
 
-## If login fails
-If you seeded earlier with old hashes, reseed users:
-```sql
-TRUNCATE TABLE users;
-SOURCE sql/seed.sql;
-```
-Or run:
+## If you see “Invalid credentials”
+Run this to refresh user passwords and reactivate accounts:
 `mysql -u root -p business_portal < sql/seed.sql`
 
-## Implemented UI + Workflow
-- Admin dashboard: create and assign tasks.
-- Employee/Core dashboard: start assigned tasks and submit to QA.
-- QA dashboard: approve or send back tasks.
-- Accounts dashboard: mark delivered commissions as paid.
-- Snapshot logic: salary and commission are frozen when task moves to QA Review.
+`sql/seed.sql` now uses `ON DUPLICATE KEY UPDATE`, so existing users are corrected in-place.
